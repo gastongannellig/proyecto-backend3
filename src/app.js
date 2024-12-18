@@ -13,5 +13,5 @@ app.use("/api/carts", cartsRouter);
 
 //listen servidor corriendo en el puerto.
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en https://localhost:${PORT}`);
+  console.log(`Servidor corriendo en ${PORT}`);
 });
