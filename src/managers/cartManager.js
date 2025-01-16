@@ -5,11 +5,10 @@ const cartsFilePath = path.resolve('src/data/carts.json');
 const productsFilePath = path.resolve('src/data/products.json');
 
 class CartManager {
-  // Crea un nuevo carrito
-  async createCart() {
+  // Crea un nuevo carrito con un ID específico
+  async createCart(id) {
     try {
       const carts = await this.getCarts();
-      const id = (Math.floor(Math.random() * 900) + 100).toString(); // Genera un ID único de hasta 3 cifras como string
       const newCart = { id, products: [] };
       carts.push(newCart);
       await fs.writeFile(cartsFilePath, JSON.stringify(carts, null, 2));
@@ -43,8 +42,15 @@ class CartManager {
       const products = JSON.parse(await fs.readFile(productsFilePath, 'utf-8'));
       cart.products = cart.products.map((item) => {
         const product = products.find((p) => p.id === item.product);
-        return { ...item, title: product.title };
-      });
+        if (product) {
+          return { ...item, title: product.title };
+        } else {
+          console.warn(`Producto con ID ${item.product} no encontrado`);
+          // Eliminar el producto del carrito si no se encuentra en el catálogo
+          this.removeProductFromCart(cart.id, item.product);
+          return null;
+        }
+      }).filter(item => item !== null);
 
       return cart;
     } catch (error) {
@@ -118,7 +124,10 @@ class CartManager {
 
       const newProducts = cart.products.filter((p) => p.product !== productId);
       if (newProducts.length === cart.products.length) {
-        return null; // Producto no encontrado en el carrito
+        // Producto no encontrado en el carrito, eliminarlo
+        await fs.writeFile(cartsFilePath, JSON.stringify(carts, null, 2));
+        console.log(`Producto no encontrado en el carrito (Carrito ID: ${cartId}, Producto ID: ${productId})`);
+        return cart;
       }
 
       cart.products = newProducts;
@@ -129,6 +138,32 @@ class CartManager {
       return cart;
     } catch (error) {
       console.error('Error al eliminar producto del carrito:', error);
+      throw error;
+    }
+  }
+
+  // Elimina un producto del catálogo y del carrito
+  async deleteProductFromCatalogAndCart(productId) {
+    try {
+      const products = await fs.readFile(productsFilePath, 'utf-8');
+      const parsedProducts = JSON.parse(products);
+      const newProducts = parsedProducts.filter((p) => p.id !== productId);
+      if (newProducts.length === parsedProducts.length) return false;
+
+      await fs.writeFile(productsFilePath, JSON.stringify(newProducts, null, 2));
+      console.log(`Producto eliminado del catálogo (ID: ${productId})`);
+
+      const carts = await this.getCarts();
+      carts.forEach(cart => {
+        cart.products = cart.products.filter((p) => p.product !== productId);
+      });
+
+      await fs.writeFile(cartsFilePath, JSON.stringify(carts, null, 2));
+      console.log(`Producto eliminado de todos los carritos (ID: ${productId})`);
+
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar producto del catálogo y del carrito:', error);
       throw error;
     }
   }

@@ -5,54 +5,63 @@
       <h2>{{title}}</h2>
       <p>Precio: ${{price}}</p>
       <p>Stock: {{stock}}</p>
-      <button class="add-to-cart" data-id="{{id}}">Agregar al Carrito</button>
+      <button class="add-to-cart" data-id="{{id}}" data-stock="{{stock}}">Agregar al Carrito</button>
       <button class="remove-product" data-id="{{id}}">Eliminar Producto</button>
     </div>
   {{/each}}
 </div>
 <script>
   document.addEventListener("DOMContentLoaded", async () => {
-    const socket = io();
     const productList = document.getElementById("product-list");
-    let cartId = localStorage.getItem('cartId');
+    if (!productList) {
+      console.error("Elemento con ID 'product-list' no encontrado.");
+      return;
+    }
 
-    // Crear un carrito y obtener el ID si no existe
-    if (!cartId) {
-      try {
-        const response = await fetch('/api/carts', {
+    const socket = io();
+    const cartId = 'default-cart-id'; // Utilizar un único ID de carrito
+
+    // Crear un carrito si no existe
+    try {
+      const response = await fetch(`/api/carts/${cartId}`);
+      if (!response.ok) {
+        await fetch('/api/carts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({ id: cartId })
         });
-        const cart = await response.json();
-        cartId = cart.id;
-        localStorage.setItem('cartId', cartId);
-        console.log('Carrito creado con ID:', cartId);
-      } catch (error) {
-        console.error('Error al crear carrito:', error);
       }
+    } catch (error) {
+      console.error('Error al crear carrito:', error);
     }
 
-    if (productList) {
-      socket.on("updateProducts", (products) => {
-        productList.innerHTML = "";
-        products.forEach(product => {
-          const productCard = document.createElement("div");
-          productCard.className = "product-card";
-          productCard.innerHTML = `
-            <h2>${product.title}</h2>
-            <p>Precio: $${product.price}</p>
-            <p>Stock: ${product.stock}</p>
-            <button class="add-to-cart" data-id="${product.id}">Agregar al Carrito</button>
-            <button class="remove-product" data-id="${product.id}">Eliminar Producto</button>`;
-          productList.appendChild(productCard);
-        });
+    socket.on("updateProducts", (products) => {
+      productList.innerHTML = "";
+      products.forEach(product => {
+        const productCard = document.createElement("div");
+        productCard.className = "product-card";
+        productCard.innerHTML = `
+          <h2>${product.title}</h2>
+          <p>Precio: $${product.price}</p>
+          <p>Stock: ${product.stock}</p>
+          <button class="add-to-cart" data-id="${product.id}" data-stock="${product.stock}">Agregar al Carrito</button>
+          <button class="remove-product" data-id="${product.id}">Eliminar Producto</button>`;
+        productList.appendChild(productCard);
+      });
 
-        // Agregar eventos a los botones
-        document.querySelectorAll(".add-to-cart").forEach(button => {
-          button.addEventListener("click", (event) => {
-            const productId = event.target.getAttribute("data-id");
+      // Agregar eventos a los botones
+      document.querySelectorAll(".add-to-cart").forEach(button => {
+        button.addEventListener("click", async (event) => {
+          const productId = event.target.getAttribute("data-id");
+          const productStock = parseInt(event.target.getAttribute("data-stock"));
+          const response = await fetch(`/api/carts/${cartId}`);
+          const cart = await response.json();
+          const productInCart = cart.products.find(p => p.product === productId);
+          const quantityInCart = productInCart ? productInCart.quantity : 0;
+
+          if (quantityInCart < productStock) {
             fetch(`/api/carts/${cartId}/product/${productId}`, {
               method: "POST",
               headers: {
@@ -66,35 +75,29 @@
                 console.error("Error al agregar producto al carrito");
               }
             });
-          });
+          } else {
+            alert("No hay suficiente stock disponible para agregar más de este producto al carrito.");
+          }
         });
+      });
 
-        document.querySelectorAll(".remove-product").forEach(button => {
-          button.addEventListener("click", (event) => {
-            const productId = event.target.getAttribute("data-id");
-            fetch(`/api/carts/${cartId}/product/${productId}`, {
+      document.querySelectorAll(".remove-product").forEach(button => {
+        button.addEventListener("click", (event) => {
+          const productId = event.target.getAttribute("data-id");
+          if (confirm("¿Estás seguro que quieres borrar el producto?")) {
+            fetch(`/api/products/${productId}`, {
               method: "DELETE"
             }).then(response => {
               if (response.ok) {
-                console.log("Producto eliminado del carrito");
-                // Verificar si el carrito está vacío
-                fetch(`/api/carts/${cartId}`)
-                  .then(response => response.json())
-                  .then(cart => {
-                    if (cart.products.length === 0) {
-                      localStorage.removeItem('cartId');
-                      console.log('Carrito vacío, ID eliminado del almacenamiento local');
-                    }
-                  });
+                console.log("Producto eliminado del catálogo");
+                location.reload(); // Recargar la página para actualizar la lista de productos
               } else {
-                console.error("Error al eliminar producto del carrito");
+                console.error("Error al eliminar producto del catálogo");
               }
             });
-          });
+          }
         });
       });
-    } else {
-      console.error("Elemento con ID 'product-list' no encontrado.");
-    }
+    });
   });
 </script>

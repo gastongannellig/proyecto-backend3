@@ -58,11 +58,51 @@
   },
   {
     "id": "135",
-    "products": [
-      {
-        "product": "298",
-        "quantity": 2
-      }
-    ]
+    "products": []
+  },
+  {
+    "id": "278",
+    "products": []
+  },
+  {
+    "id": "345",
+    "products": []
+  },
+  {
+    "id": "116",
+    "products": []
+  },
+  {
+    "id": "790",
+    "products": []
+  },
+  {
+    "id": "272",
+    "products": []
+  },
+  {
+    "id": "121",
+    "products": []
+  },
+  {
+    "id": "713",
+    "products": []
+  },
+  {
+    "id": "280",
+    "products": []
+  },
+  {
+    "products": []
+  },
+  {
+    "products": []
+  },
+  {
+    "products": []
+  },
+  {
+    "id": "default-cart-id",
+    "products": []
   }
 ]

@@ -29,8 +29,12 @@ router.get('/realtimeproducts', (req, res) => {
 
 router.get('/carts', async (req, res) => {
   try {
-    const cartId = req.query.cartId; // Obtener el ID del carrito desde la consulta
+    const cartId = 'default-cart-id'; // Utilizar un único ID de carrito
     const cart = await cartManager.getCartById(cartId);
+    if (!cart) {
+      await cartManager.createCart(cartId);
+      return res.render('carts', { title: 'Carrito', cart: { products: [] } });
+    }
     res.render('carts', { title: 'Carrito', cart });
   } catch (error) {
     console.error('Error al renderizar vista:', error);

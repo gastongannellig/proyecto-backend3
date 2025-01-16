@@ -1,5 +1,5 @@
 <div class="container">
-  <h1>BACKEND SEGUNDA ENTREGA</h1>
+  <h1>PROYECTO BACKEND</h1>
   <p>Explora las diferentes funcionalidades de la aplicación:</p>
   <ul class="features-list">
     <li><a href="/realtimeproducts">Ver Productos en Tiempo Real</a></li>
@@ -9,9 +9,69 @@
     {{#each products}}
       <div class="product-card">
         <h3>{{title}}</h3>
-        <p>ID: {{id}}</p>
+        <p>{{description}}</p>
         <p>Precio: ${{price}}</p>
       </div>
     {{/each}}
   </div>
+  <h2>Crear Nuevo Producto</h2>
+  <form id="create-product-form">
+    <div>
+      <label for="title">Título:</label>
+      <input type="text" id="title" name="title" required>
+    </div>
+    <div>
+      <label for="description">Descripción:</label>
+      <input type="text" id="description" name="description" required>
+    </div>
+    <div>
+      <label for="code">Código:</label>
+      <input type="text" id="code" name="code" required>
+    </div>
+    <div>
+      <label for="price">Precio:</label>
+      <input type="number" id="price" name="price" required>
+    </div>
+    <div>
+      <label for="stock">Stock:</label>
+      <input type="number" id="stock" name="stock" required>
+    </div>
+    <div>
+      <label for="category">Categoría:</label>
+      <input type="text" id="category" name="category" required>
+    </div>
+    <div>
+      <label for="thumbnails">Thumbnails (opcional):</label>
+      <input type="text" id="thumbnails" name="thumbnails">
+    </div>
+    <button type="submit">Crear Producto</button>
+  </form>
 </div>
+<script>
+  document.getElementById('create-product-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const productData = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productData)
+      });
+
+      if (response.ok) {
+        const newProduct = await response.json();
+        console.log('Producto creado:', newProduct);
+        // Actualizar la lista de productos en la interfaz de usuario
+        location.reload();
+      } else {
+        console.error('Error al crear producto');
+      }
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+    }
+  });
+</script>

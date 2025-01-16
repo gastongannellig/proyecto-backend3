@@ -1,30 +1,24 @@
 [
   {
-    "id": "298",
-    "title": "Celular",
-    "description": "Descripción del Producto",
-    "code": "Código del Producto",
-    "price": 100,
-    "stock": 50,
-    "category": "Categoría del Producto",
-    "thumbnails": [
-      "ruta/imagen1.jpg",
-      "ruta/imagen2.jpg"
-    ],
+    "id": "540",
+    "title": "xpedia",
+    "description": "celu",
+    "code": "150",
+    "price": "12",
+    "stock": "1",
+    "category": "Celulares",
+    "thumbnails": "",
     "status": true
   },
   {
-    "id": "846",
-    "title": "Iphone",
-    "description": "Descripción del Producto",
-    "code": "Código del Producto",
-    "price": 100,
-    "stock": 50,
-    "category": "Categoría del Producto",
-    "thumbnails": [
-      "ruta/imagen1.jpg",
-      "ruta/imagen2.jpg"
-    ],
+    "id": "586",
+    "title": "iphone 13",
+    "description": "Iphone medio viejito",
+    "code": "13",
+    "price": "150",
+    "stock": "5",
+    "category": "Apple",
+    "thumbnails": "",
     "status": true
   }
 ]
