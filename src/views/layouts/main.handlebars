@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="/">Inicio</a></li>
+        <li><a href="/realtimeproducts">Productos</a></li>
+        <li><a href="#" id="cart-link">Carrito</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    {{{body}}}
+  </main>
+  <footer>
+    <p>&copy; PROYECTO BACKEND</p>
+  </footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cartId = localStorage.getItem('cartId');
+      const cartLink = document.getElementById('cart-link');
+      if (cartId && cartLink) {
+        cartLink.href = `/carts?cartId=${cartId}`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<div class="container">
+  <h1>BACKEND SEGUNDA ENTREGA</h1>
+  <p>Explora las diferentes funcionalidades de la aplicación:</p>
+  <ul class="features-list">
+    <li><a href="/realtimeproducts">Ver Productos en Tiempo Real</a></li>
+  </ul>
+  <h2>Lista de Productos</h2>
+  <div class="product-list">
+    {{#each products}}
+      <div class="product-card">
+        <h3>{{title}}</h3>
+        <p>ID: {{id}}</p>
+        <p>Precio: ${{price}}</p>
+      </div>
+    {{/each}}
+  </div>
+</div>

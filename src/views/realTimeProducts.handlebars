@@ -1,0 +1,100 @@
+<h1>Productos</h1>
+<div id="product-list" class="product-list">
+  {{#each products}}
+    <div class="product-card">
+      <h2>{{title}}</h2>
+      <p>Precio: ${{price}}</p>
+      <p>Stock: {{stock}}</p>
+      <button class="add-to-cart" data-id="{{id}}">Agregar al Carrito</button>
+      <button class="remove-product" data-id="{{id}}">Eliminar Producto</button>
+    </div>
+  {{/each}}
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const socket = io();
+    const productList = document.getElementById("product-list");
+    let cartId = localStorage.getItem('cartId');
+
+    // Crear un carrito y obtener el ID si no existe
+    if (!cartId) {
+      try {
+        const response = await fetch('/api/carts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const cart = await response.json();
+        cartId = cart.id;
+        localStorage.setItem('cartId', cartId);
+        console.log('Carrito creado con ID:', cartId);
+      } catch (error) {
+        console.error('Error al crear carrito:', error);
+      }
+    }
+
+    if (productList) {
+      socket.on("updateProducts", (products) => {
+        productList.innerHTML = "";
+        products.forEach(product => {
+          const productCard = document.createElement("div");
+          productCard.className = "product-card";
+          productCard.innerHTML = `
+            <h2>${product.title}</h2>
+            <p>Precio: $${product.price}</p>
+            <p>Stock: ${product.stock}</p>
+            <button class="add-to-cart" data-id="${product.id}">Agregar al Carrito</button>
+            <button class="remove-product" data-id="${product.id}">Eliminar Producto</button>`;
+          productList.appendChild(productCard);
+        });
+
+        // Agregar eventos a los botones
+        document.querySelectorAll(".add-to-cart").forEach(button => {
+          button.addEventListener("click", (event) => {
+            const productId = event.target.getAttribute("data-id");
+            fetch(`/api/carts/${cartId}/product/${productId}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ quantity: 1 })
+            }).then(response => {
+              if (response.ok) {
+                console.log("Producto agregado al carrito");
+              } else {
+                console.error("Error al agregar producto al carrito");
+              }
+            });
+          });
+        });
+
+        document.querySelectorAll(".remove-product").forEach(button => {
+          button.addEventListener("click", (event) => {
+            const productId = event.target.getAttribute("data-id");
+            fetch(`/api/carts/${cartId}/product/${productId}`, {
+              method: "DELETE"
+            }).then(response => {
+              if (response.ok) {
+                console.log("Producto eliminado del carrito");
+                // Verificar si el carrito está vacío
+                fetch(`/api/carts/${cartId}`)
+                  .then(response => response.json())
+                  .then(cart => {
+                    if (cart.products.length === 0) {
+                      localStorage.removeItem('cartId');
+                      console.log('Carrito vacío, ID eliminado del almacenamiento local');
+                    }
+                  });
+              } else {
+                console.error("Error al eliminar producto del carrito");
+              }
+            });
+          });
+        });
+      });
+    } else {
+      console.error("Elemento con ID 'product-list' no encontrado.");
+    }
+  });
+</script>

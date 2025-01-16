@@ -1,41 +1,7 @@
 [
   {
-    "id": "1",
-    "title": "Huawei P40 Pro+",
-    "description": "Occlusion of Pelvis Lymph with Extralum Dev, Open Approach",
-    "code": "75857-2304",
-    "price": "$156.97",
-    "status": true,
-    "stock": 1,
-    "thumbnails": "http://dummyimage.com/136x100.png/5fa2dd/ffffff"
-  },
-  {
-    "id": "2",
-    "title": "Sony Ericsson K200",
-    "description": "Supplement Left Fibula with Autol Sub, Open Approach",
-    "code": "0517-2315",
-    "price": "$298.87",
-    "status": false,
-    "stock": 2,
-    "thumbnails": "http://dummyimage.com/137x100.png/5fa2dd/ffffff"
-  },
-  {
-    "id": "3",
-    "title": "Nuevo Nombre del Producto",
-    "description": "Nueva Descripción del Producto",
-    "code": "Nuevo Código del Producto",
-    "price": 150,
-    "status": true,
-    "stock": 30,
-    "thumbnails": [
-      "nueva/ruta/imagen1.jpg",
-      "nueva/ruta/imagen2.jpg"
-    ],
-    "category": "Nueva Categoría del Producto"
-  },
-  {
-    "id": "297",
-    "title": "Nombre del Producto",
+    "id": "298",
+    "title": "Celular",
     "description": "Descripción del Producto",
     "code": "Código del Producto",
     "price": 100,
@@ -49,7 +15,7 @@
   },
   {
     "id": "846",
-    "title": "Nombre del Producto",
+    "title": "Iphone",
     "description": "Descripción del Producto",
     "code": "Código del Producto",
     "price": 100,
