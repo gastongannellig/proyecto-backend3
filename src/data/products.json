@@ -1,24 +1,102 @@
 [
   {
-    "id": "540",
-    "title": "xpedia",
-    "description": "celu",
-    "code": "150",
-    "price": "12",
-    "stock": "1",
-    "category": "Celulares",
-    "thumbnails": "",
+    "title": "Samsung Galaxy S23",
+    "description": "Smartphone Samsung con pantalla Dynamic AMOLED 2X de 6.1 pulgadas y cámara triple.",
+    "code": "S23-001",
+    "price": 899.99,
+    "stock": 50,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/samsung-galaxy-s23.jpg",
     "status": true
   },
   {
-    "id": "586",
-    "title": "iphone 13",
-    "description": "Iphone medio viejito",
-    "code": "13",
-    "price": "150",
-    "stock": "5",
-    "category": "Apple",
-    "thumbnails": "",
+    "title": "iPhone 14 Pro",
+    "description": "iPhone 14 Pro con pantalla Super Retina XDR de 6.1 pulgadas y chip A16 Bionic.",
+    "code": "IP14P-002",
+    "price": 1099.99,
+    "stock": 30,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/iphone-14-pro.jpg",
+    "status": true
+  },
+  {
+    "title": "Google Pixel 7",
+    "description": "Google Pixel 7 con pantalla OLED de 6.3 pulgadas y cámara principal de 50 MP.",
+    "code": "GP7-003",
+    "price": 599.99,
+    "stock": 40,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/google-pixel-7.jpg",
+    "status": true
+  },
+  {
+    "title": "OnePlus 11",
+    "description": "OnePlus 11 con pantalla Fluid AMOLED de 6.7 pulgadas y cámara de 50 MP.",
+    "code": "OP11-004",
+    "price": 749.99,
+    "stock": 35,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/oneplus-11.jpg",
+    "status": true
+  },
+  {
+    "title": "Xiaomi 13 Pro",
+    "description": "Xiaomi 13 Pro con pantalla AMOLED de 6.73 pulgadas y cámara Leica de 50 MP.",
+    "code": "X13P-005",
+    "price": 899.99,
+    "stock": 20,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/xiaomi-13-pro.jpg",
+    "status": true
+  },
+  {
+    "title": "Oppo Find X5 Pro",
+    "description": "Oppo Find X5 Pro con pantalla AMOLED de 6.7 pulgadas y cámara de 50 MP.",
+    "code": "OPX5P-006",
+    "price": 949.99,
+    "stock": 15,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/oppo-find-x5-pro.jpg",
+    "status": true
+  },
+  {
+    "title": "Sony Xperia 1 IV",
+    "description": "Sony Xperia 1 IV con pantalla OLED 4K de 6.5 pulgadas y cámara triple de 12 MP.",
+    "code": "SX1IV-007",
+    "price": 1399.99,
+    "stock": 10,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/sony-xperia-1-iv.jpg",
+    "status": true
+  },
+  {
+    "title": "Realme GT 2 Pro",
+    "description": "Realme GT 2 Pro con pantalla AMOLED de 6.7 pulgadas y cámara de 50 MP.",
+    "code": "RGT2P-008",
+    "price": 599.99,
+    "stock": 25,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/realme-gt-2-pro.jpg",
+    "status": true
+  },
+  {
+    "title": "Asus ROG Phone 6",
+    "description": "Asus ROG Phone 6 con pantalla AMOLED de 6.78 pulgadas y 6000 mAh de batería.",
+    "code": "RPG6-009",
+    "price": 999.99,
+    "stock": 12,
+    "category": "gaming phone",
+    "thumbnails": "https://example.com/images/asus-rog-phone-6.jpg",
+    "status": true
+  },
+  {
+    "title": "Motorola Edge 30 Pro",
+    "description": "Motorola Edge 30 Pro con pantalla OLED de 6.7 pulgadas y cámara principal de 50 MP.",
+    "code": "ME30P-010",
+    "price": 799.99,
+    "stock": 22,
+    "category": "smartphone",
+    "thumbnails": "https://example.com/images/motorola-edge-30-pro.jpg",
     "status": true
   }
 ]

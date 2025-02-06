@@ -1,13 +1,13 @@
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import { engine } from "express-handlebars";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs"; // Importa el módulo fs
-import productsRouter from "./routes/products.js";
-import cartsRouter from "./routes/carts.js";
-import viewsRouter from "./routes/views.router.js";
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { engine } from 'express-handlebars';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
+import productsRouter from './routes/products.js';
+import cartsRouter from './routes/carts.js';
+import viewsRouter from './routes/views.router.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,8 +18,20 @@ const io = new Server(httpServer);
 const PORT = 8080;
 const productsFilePath = path.resolve("src/data/products.json"); // Define productsFilePath
 
+// Conectar a MongoDB
+mongoose.connect("mongodb+srv://gastongannellig:53769421@codergannelli.5puq3.mongodb.net/Tienda?retryWrites=true&w=majority&appName=CoderGannelli")
+  .then(() => console.log("Conectado a MongoDB"))
+  .catch((error) => console.error("Error al conectar a MongoDB:", error));
+
 // Configuración de Handlebars
-app.engine("handlebars", engine());
+app.engine("handlebars", engine({
+  extname: '.handlebars',
+  defaultLayout: 'main',
+  runtimeOptions: {
+    allowProtoPropertiesByDefault: true,
+    allowProtoMethodsByDefault: true,
+  },
+}));
 app.set("view engine", "handlebars");
 app.set("views", path.resolve(__dirname, "views"));
 
@@ -27,28 +39,13 @@ app.set("views", path.resolve(__dirname, "views"));
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, "public")));
 
+// Socket.io
+app.set("socketio", io);
+
 // Rutas
-app.use("/api/products", productsRouter);
-app.use("/api/carts", cartsRouter);
-app.use("/", viewsRouter);
-
-// Configurar socket.io
-io.on("connection", (socket) => {
-  console.log("Cliente conectado");
-  const products = JSON.parse(fs.readFileSync(productsFilePath, "utf-8"));
-  socket.emit("updateProducts", products);
-
-  socket.on("disconnect", () => {
-    console.log("Cliente desconectado");
-  });
-});
-
-// Detectar cambios en products.json
-fs.watchFile(productsFilePath, (curr, prev) => {
-  console.log("products.json ha cambiado");
-  const products = JSON.parse(fs.readFileSync(productsFilePath, "utf-8"));
-  io.emit("updateProducts", products);
-});
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/', viewsRouter);
 
 // Inicializar el servidor
 httpServer.listen(PORT, () => {

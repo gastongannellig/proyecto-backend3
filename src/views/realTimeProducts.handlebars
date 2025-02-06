@@ -1,103 +1,70 @@
-<h1>Productos</h1>
-<div id="product-list" class="product-list">
-  {{#each products}}
-    <div class="product-card">
-      <h2>{{title}}</h2>
-      <p>Precio: ${{price}}</p>
-      <p>Stock: {{stock}}</p>
-      <button class="add-to-cart" data-id="{{id}}" data-stock="{{stock}}">Agregar al Carrito</button>
-      <button class="remove-product" data-id="{{id}}">Eliminar Producto</button>
-    </div>
-  {{/each}}
-</div>
+<main>
+  <h1>TIENDA</h1>
+  <div id="product-list" class="product-list">
+    {{#each products}}
+      <div class="product-card">
+        <button class="delete-product admin-only" data-id="{{_id}}">x</button>
+        <h3 class="product-title">{{title}}</h3>
+        <p>{{description}}</p>
+        <p>Precio: ${{price}}</p>
+        <p>Stock: {{stock}}</p>
+        {{#if thumbnails}}
+          {{#each thumbnails}}
+            <img src="{{this}}" alt="Product Thumbnail" class="product-thumbnail">
+          {{/each}}
+        {{/if}}
+        <button class="add-to-cart" data-id="{{_id}}" data-stock="{{stock}}">Agregar al Carrito</button>
+      </div>
+    {{/each}}
+  </div>
+  <div id="pagination-controls">
+    {{#if hasPrevPage}}
+      <a href="/realtimeproducts?page={{prevPage}}{{#if category}}&category={{category}}{{/if}}" class="pagination-button">«</a>
+    {{/if}}
+    <span id="page-info">Página {{currentPage}} de {{totalPages}}</span>
+    {{#if hasNextPage}}
+      <a href="/realtimeproducts?page={{nextPage}}{{#if category}}&category={{category}}{{/if}}" class="pagination-button">»</a>
+    {{/if}}
+  </div>
+</main>
 <script>
-  document.addEventListener("DOMContentLoaded", async () => {
-    const productList = document.getElementById("product-list");
-    if (!productList) {
-      console.error("Elemento con ID 'product-list' no encontrado.");
-      return;
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  const socket = io(); // Conectar con WebSockets
+  const cartCount = document.getElementById('cart-count');
+  const cartId = localStorage.getItem('cartId') || 'default-cart-id'; // Utilizar un único ID de carrito
 
-    const socket = io();
-    const cartId = 'default-cart-id'; // Utilizar un único ID de carrito
-
-    // Crear un carrito si no existe
+  const updateCartCount = async () => {
     try {
       const response = await fetch(`/api/carts/${cartId}`);
-      if (!response.ok) {
-        await fetch('/api/carts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id: cartId })
-        });
+      if (response.ok) {
+        const cart = await response.json();
+        const count = cart.products.reduce((total, product) => total + product.quantity, 0);
+        cartCount.textContent = count;
+        cartCount.style.display = count > 0 ? 'block' : 'none';
+      } else {
+        console.error("Error al obtener el carrito");
       }
     } catch (error) {
-      console.error('Error al crear carrito:', error);
+      console.error("Error al obtener el carrito:", error);
     }
+  };
 
-    socket.on("updateProducts", (products) => {
-      productList.innerHTML = "";
-      products.forEach(product => {
-        const productCard = document.createElement("div");
-        productCard.className = "product-card";
-        productCard.innerHTML = `
-          <h2>${product.title}</h2>
-          <p>Precio: $${product.price}</p>
-          <p>Stock: ${product.stock}</p>
-          <button class="add-to-cart" data-id="${product.id}" data-stock="${product.stock}">Agregar al Carrito</button>
-          <button class="remove-product" data-id="${product.id}">Eliminar Producto</button>`;
-        productList.appendChild(productCard);
-      });
-
-      // Agregar eventos a los botones
-      document.querySelectorAll(".add-to-cart").forEach(button => {
-        button.addEventListener("click", async (event) => {
-          const productId = event.target.getAttribute("data-id");
-          const productStock = parseInt(event.target.getAttribute("data-stock"));
-          const response = await fetch(`/api/carts/${cartId}`);
-          const cart = await response.json();
-          const productInCart = cart.products.find(p => p.product === productId);
-          const quantityInCart = productInCart ? productInCart.quantity : 0;
-
-          if (quantityInCart < productStock) {
-            fetch(`/api/carts/${cartId}/product/${productId}`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ quantity: 1 })
-            }).then(response => {
-              if (response.ok) {
-                console.log("Producto agregado al carrito");
-              } else {
-                console.error("Error al agregar producto al carrito");
-              }
-            });
-          } else {
-            alert("No hay suficiente stock disponible para agregar más de este producto al carrito.");
-          }
-        });
-      });
-
-      document.querySelectorAll(".remove-product").forEach(button => {
-        button.addEventListener("click", (event) => {
-          const productId = event.target.getAttribute("data-id");
-          if (confirm("¿Estás seguro que quieres borrar el producto?")) {
-            fetch(`/api/products/${productId}`, {
-              method: "DELETE"
-            }).then(response => {
-              if (response.ok) {
-                console.log("Producto eliminado del catálogo");
-                location.reload(); // Recargar la página para actualizar la lista de productos
-              } else {
-                console.error("Error al eliminar producto del catálogo");
-              }
-            });
-          }
-        });
-      });
-    });
+  // Escuchar eventos de WebSockets para actualizar productos en tiempo real
+  socket.on("updateProducts", (newProduct) => {
+    console.log("Nuevo producto recibido:", newProduct);
+    location.reload(); // Recargar la página para actualizar la lista de productos
   });
+
+  socket.on("productDeleted", (productId) => {
+    console.log("Producto eliminado:", productId);
+    location.reload(); // Recargar la página para actualizar la lista de productos
+  });
+
+  socket.on("productAddedToCart", (data) => {
+    console.log("Producto agregado al carrito:", data);
+    updateCartCount(); // Actualizar el contador del carrito
+  });
+
+  updateCartCount(); // Inicializar el contador del carrito
+});
 </script>

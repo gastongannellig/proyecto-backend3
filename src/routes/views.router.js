@@ -1,26 +1,49 @@
 import { Router } from 'express';
-import path from 'path';
-import fs from 'fs';
-import CartManager from '../managers/cartManager.js';
+import Product from '../models/products.model.js';
+import Cart from '../models/carts.model.js';
 
 const router = Router();
-const productsFilePath = path.resolve('src/data/products.json');
-const cartManager = new CartManager();
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const products = JSON.parse(fs.readFileSync(productsFilePath, 'utf-8'));
-    res.render('home', { title: 'Home', products });
+    const products = await Product.find();
+    res.render('home', { title: 'INICIO', products });
   } catch (error) {
     console.error('Error al renderizar vista:', error);
     res.status(500).send('Error al renderizar vista');
   }
 });
 
-router.get('/realtimeproducts', (req, res) => {
+router.get('/realtimeproducts', async (req, res) => {
   try {
-    const products = JSON.parse(fs.readFileSync(productsFilePath, 'utf-8'));
-    res.render('realTimeProducts', { title: 'Real-Time Products', products });
+    let { page = 1, category } = req.query;
+    page = Math.max(parseInt(page), 1); // Asegura que page sea >= 1
+    const limit = 4;
+    const filter = category ? { category } : {};
+    const options = {
+      limit,
+      skip: (page - 1) * limit,
+      lean: true
+    };
+
+    const [products, totalProducts] = await Promise.all([
+      Product.find(filter, null, options),
+      Product.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.render('realTimeProducts', {
+      title: 'TIENDA',
+      products,
+      currentPage: page,
+      totalPages,
+      hasPrevPage: page > 1,
+      hasNextPage: page < totalPages,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: page < totalPages ? page + 1 : null,
+      category
+    });
   } catch (error) {
     console.error('Error al renderizar vista:', error);
     res.status(500).send('Error al renderizar vista');
@@ -29,16 +52,15 @@ router.get('/realtimeproducts', (req, res) => {
 
 router.get('/carts', async (req, res) => {
   try {
-    const cartId = 'default-cart-id'; // Utilizar un único ID de carrito
-    const cart = await cartManager.getCartById(cartId);
+    const cartId = req.query.cartId;
+    const cart = await Cart.findById(cartId).populate('products.product');
     if (!cart) {
-      await cartManager.createCart(cartId);
-      return res.render('carts', { title: 'Carrito', cart: { products: [] } });
+      return res.status(404).send('Carrito no encontrado');
     }
-    res.render('carts', { title: 'Carrito', cart });
+    res.render('carts', { title: 'CARRITO', cart });
   } catch (error) {
-    console.error('Error al renderizar vista:', error);
-    res.status(500).send('Error al renderizar vista');
+    console.error('Error al obtener carrito:', error);
+    res.status(500).send('Error al obtener carrito');
   }
 });
 

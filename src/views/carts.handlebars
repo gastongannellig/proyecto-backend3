@@ -3,44 +3,17 @@
   {{#if cart.products.length}}
     {{#each cart.products}}
       <div class="product-card">
-        <button class="remove-product-cart" data-id="{{product}}">x</button>
-        <h3>{{title}}</h3>
-        <p>Cantidad: {{quantity}}</p>
+        <button class="remove-product-cart" data-id="{{product._id}}">x</button>
+        <h3>{{product.title}}</h3>
+        <div class="quantity-control">
+          <button class="decrease-quantity" data-id="{{product._id}}">-</button>
+          <span class="quantity">{{quantity}}</span>
+          <button class="increase-quantity" data-id="{{product._id}}" data-stock="{{product.stock}}">+</button>
+        </div>
       </div>
     {{/each}}
+    <button id="empty-cart" class="empty-cart"><i class="fas fa-trash-alt"></i></button>
   {{else}}
     <p>Carrito vacío</p>
   {{/if}}
 </div>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".remove-product-cart").forEach(button => {
-      button.addEventListener("click", (event) => {
-        const productId = event.target.getAttribute("data-id");
-        const cartId = 'default-cart-id'; // Utilizar un único ID de carrito
-        fetch(`/api/carts/${cartId}/product/${productId}`, {
-          method: "DELETE"
-        }).then(response => {
-          if (response.ok) {
-            console.log("Producto eliminado del carrito");
-            // Verificar si el carrito está vacío
-            fetch(`/api/carts/${cartId}`)
-              .then(response => response.json())
-              .then(cart => {
-                if (cart.products.length === 0) {
-                  console.log('Carrito vacío');
-                  location.reload(); // Recargar la página para actualizar la lista de productos
-                } else {
-                  // Actualizar la vista del carrito sin recargar la página
-                  const productCard = event.target.closest('.product-card');
-                  productCard.remove();
-                }
-              });
-          } else {
-            console.error("Error al eliminar producto del carrito");
-          }
-        });
-      });
-    });
-  });
-</script>

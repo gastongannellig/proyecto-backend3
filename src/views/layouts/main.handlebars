@@ -5,16 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}}</title>
   <link rel="stylesheet" href="/css/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="/js/main.js"></script>
 </head>
 <body>
   <header>
-    <nav>
+    <nav class="navbar">
+      <div class="logo">
+        <a href="/"><H3>BACKEND STORE</H3></a>
+      </div>
       <ul>
-        <li><a href="/">Inicio</a></li>
-        <li><a href="/realtimeproducts">Productos</a></li>
-        <li><a href="#" id="cart-link">Carrito</a></li>
+        <li class="dropdown">
+          <a href="/realtimeproducts">Productos</a>
+          <div class="dropdown-content" id="category-dropdown">
+          </div>
+        </li>
+        <li>
+          <a href="#" id="change-user"><i class="fas fa-user user-icon"></i></a>
+        </li>
+        <li class="cart">
+          <a href="#" id="cart-link"><i class="fas fa-shopping-cart"></i></a>
+          <span class="cart-count" id="cart-count" style="display: none;">0</span>
+        </li>
       </ul>
     </nav>
   </header>
@@ -26,11 +43,152 @@
   </footer>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      // Configuración global de toastr
+      toastr.options = {
+        "positionClass": "toast-bottom-right",
+        "timeOut": "5000",
+        "closeButton": true,
+        "progressBar": true
+      };
+
       const cartId = localStorage.getItem('cartId');
       const cartLink = document.getElementById('cart-link');
+      const cartCount = document.getElementById('cart-count');
+      const userIcon = document.querySelector('.user-icon');
+      const categoryDropdown = document.getElementById('category-dropdown');
+
+      const updateCartCount = () => {
+        fetch(`/api/carts/${cartId}`)
+          .then(response => response.json())
+          .then(data => {
+            const count = data.products.reduce((total, product) => total + product.quantity, 0);
+            cartCount.textContent = count;
+            cartCount.style.display = count > 0 ? 'block' : 'none';
+          })
+          .catch(error => console.error('Error al obtener el carrito:', error));
+      };
+
+      document.addEventListener("DOMContentLoaded", () => {
+          const categoryDropdown = document.getElementById('category-dropdown');
+
+          fetch('/api/categories') // Nueva ruta para obtener todas las categorías
+            .then(response => response.json())
+            .then(categories => {
+              categoryDropdown.innerHTML = categories.map(category => 
+                `<a href="/realtimeproducts?category=${category}">${category}</a>`).join('');
+            })
+            .catch(error => console.error('Error al obtener categorías:', error));
+        });
+
+      const loadCategories = () => {
+        fetch('/api/products')
+          .then(response => response.json())
+          .then(data => {
+            console.log("Respuesta de la API:", data); // Verifica qué devuelve la API
+            if (data.status === 'success' && Array.isArray(data.payload)) {
+              const categories = [...new Set(data.payload.map(product => product.category))];
+              categoryDropdown.innerHTML = '';
+              categories.forEach(category => {
+                const categoryLink = document.createElement('a');
+                categoryLink.href = `/realtimeproducts?category=${category}`;
+                categoryLink.textContent = category;
+                categoryDropdown.appendChild(categoryLink);
+              });
+            } else {
+              throw new Error('La respuesta de la API no contiene un array de productos');
+            }
+          })
+          .catch(error => console.error('Error al cargar categorías:', error));
+      };
+
       if (cartId && cartLink) {
         cartLink.href = `/carts?cartId=${cartId}`;
+        updateCartCount();
+      } else {
+        // Crear un nuevo carrito si no existe uno en localStorage
+        fetch('/api/carts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          localStorage.setItem('cartId', data._id);
+          cartLink.href = `/carts?cartId=${data._id}`;
+          cartCount.textContent = 0;
+          cartCount.style.display = 'none';
+        })
+        .catch(error => console.error('Error al crear carrito:', error));
       }
+
+      const showLoginAlert = () => {
+        Swal.fire({
+          title: 'Iniciar sesión',
+          text: "Selecciona tu rol",
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'Administrador',
+          cancelButtonText: 'Invitado'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Guardar rol en localStorage y mostrar elementos solo para administrador
+            localStorage.setItem('userRole', 'admin');
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            userIcon.classList.add('admin');
+            toastr.success('Has iniciado sesión como Administrador');
+          } else {
+            // Guardar rol en localStorage y ocultar elementos solo para administrador
+            localStorage.setItem('userRole', 'guest');
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            userIcon.classList.remove('admin');
+            toastr.info('Has iniciado sesión como Invitado');
+          }
+          // Establecer un temporizador para restablecer el rol después de 5 minutos
+          setTimeout(() => {
+            localStorage.removeItem('userRole');
+            location.reload();
+          }, 5 * 60 * 1000); // 5 minutos en milisegundos
+        });
+      };
+
+      // Verificar el rol del usuario al cargar la página
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        userIcon.classList.add('admin');
+      } else if (userRole === 'guest') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+        userIcon.classList.remove('admin');
+      } else {
+        // Mostrar alerta de inicio de sesión si no hay rol guardado
+        showLoginAlert();
+      }
+
+      // Cambiar usuario
+      document.getElementById('change-user').addEventListener('click', (event) => {
+        event.preventDefault();
+        const currentRole = localStorage.getItem('userRole');
+        if (currentRole === 'admin') {
+          localStorage.setItem('userRole', 'guest');
+          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+          userIcon.classList.remove('admin');
+          toastr.info('Has cambiado a Invitado');
+        } else {
+          localStorage.setItem('userRole', 'admin');
+          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+          userIcon.classList.add('admin');
+          toastr.success('Has cambiado a Administrador');
+        }
+      });
+
+      // Escuchar eventos de agregar al carrito
+      document.addEventListener('productAddedToCart', () => {
+        updateCartCount();
+      });
+
+      // Cargar categorías al cargar la página
+      loadCategories();
     });
   </script>
 </body>

@@ -2,20 +2,21 @@
   <h1>PROYECTO BACKEND</h1>
   <p>Explora las diferentes funcionalidades de la aplicación:</p>
   <ul class="features-list">
-    <li><a href="/realtimeproducts">Ver Productos en Tiempo Real</a></li>
+    <li><a href="/realtimeproducts">TIENDA</a></li>
   </ul>
-  <h2>Lista de Productos</h2>
+  <h2>Nuestros seleccionados</h2>
   <div class="product-list">
     {{#each products}}
       <div class="product-card">
         <h3>{{title}}</h3>
         <p>{{description}}</p>
         <p>Precio: ${{price}}</p>
+        <button class="add-to-cart" data-id="{{_id}}" data-stock="{{stock}}">Agregar al Carrito</button>
       </div>
     {{/each}}
   </div>
-  <h2>Crear Nuevo Producto</h2>
-  <form id="create-product-form">
+  <h2 class="admin-only">Crear Nuevo Producto</h2>
+  <form id="create-product-form" class="admin-only">
     <div>
       <label for="title">Título:</label>
       <input type="text" id="title" name="title" required>
@@ -41,37 +42,114 @@
       <input type="text" id="category" name="category" required>
     </div>
     <div>
-      <label for="thumbnails">Thumbnails (opcional):</label>
-      <input type="text" id="thumbnails" name="thumbnails">
+      <label for="thumbnails">Thumbnails:</label>
+      <input type="text" id="thumbnails" name="thumbnails" placeholder="http://example.com/image1.jpg, http://example.com/image2.jpg">
     </div>
     <button type="submit">Crear Producto</button>
   </form>
 </div>
 <script>
-  document.getElementById('create-product-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const productData = Object.fromEntries(formData.entries());
+  document.addEventListener("DOMContentLoaded", () => {
+    const cartId = localStorage.getItem('cartId') || 'default-cart-id';
 
-    try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(productData)
+    const updateCartCount = () => {
+      fetch(`/api/carts/${cartId}`)
+        .then(response => response.json())
+        .then(data => {
+          const count = data.products.reduce((total, product) => total + product.quantity, 0);
+          const cartCount = document.getElementById('cart-count');
+          cartCount.textContent = count;
+          cartCount.style.display = count > 0 ? 'block' : 'none';
+        })
+        .catch(error => console.error('Error al obtener el carrito:', error));
+    };
+
+    document.querySelectorAll(".add-to-cart").forEach(button => {
+      button.addEventListener("click", async (event) => {
+        const productId = event.target.getAttribute("data-id");
+        const productStock = parseInt(event.target.getAttribute("data-stock"));
+        const productTitle = event.target.closest('.product-card').querySelector('h3').textContent;
+
+        try {
+          const response = await fetch(`/api/carts/${cartId}`);
+          if (!response.ok) {
+            throw new Error('Error al obtener el carrito');
+          }
+          const cart = await response.json();
+          if (!cart || !cart.products) {
+            throw new Error('Carrito no encontrado o sin productos');
+          }
+          const productInCart = cart.products.find(p => p.product && p.product._id === productId);
+          const quantityInCart = productInCart ? productInCart.quantity : 0;
+
+          if (quantityInCart < productStock) {
+            const addResponse = await fetch(`/api/carts/${cartId}/products`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ productId, quantity: 1 })
+            });
+            if (addResponse.ok) {
+              toastr.success(`Producto <strong>${productTitle}</strong> agregado al carrito`, { positionClass: 'toast-top-right' });
+              // Disparar evento personalizado para actualizar el contador del carrito
+              document.dispatchEvent(new CustomEvent('productAddedToCart'));
+            } else {
+              toastr.error(`Se ha producido un error al agregar <strong>${productTitle}</strong> al carrito.`, { positionClass: 'toast-top-right' });
+            }
+          } else {
+            toastr.warning('No hay suficiente stock disponible para agregar más de este producto al carrito.', 'Stock insuficiente', { positionClass: 'toast-top-right' });
+          }
+        } catch (error) {
+          toastr.error(`Error al agregar producto al carrito: ${error.message}`, 'Error', { positionClass: 'toast-top-right' });
+        }
       });
+    });
 
-      if (response.ok) {
-        const newProduct = await response.json();
-        console.log('Producto creado:', newProduct);
-        // Actualizar la lista de productos en la interfaz de usuario
-        location.reload();
+    // Manejar el envío del formulario de creación de productos
+    document.getElementById('create-product-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const productData = Object.fromEntries(formData.entries());
+
+      // Convertir thumbnails a un array si es necesario
+      if (productData.thumbnails) {
+        productData.thumbnails = productData.thumbnails.split(',').map(url => url.trim());
       } else {
-        console.error('Error al crear producto');
+        productData.thumbnails = []; // Asegurarse de que thumbnails sea un array vacío si no se proporciona
       }
-    } catch (error) {
-      console.error('Error al crear producto:', error);
-    }
+
+      try {
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData)
+        });
+
+        if (response.ok) {
+          const newProduct = await response.json();
+          toastr.success(`Producto <strong>${newProduct.payload.title}</strong> creado exitosamente`, { positionClass: 'toast-top-right' });
+          form.reset(); // Limpiar el formulario
+          // Recargar la lista de productos
+          location.reload();
+        } else {
+          const errorData = await response.json();
+          toastr.error(`Error al crear producto: ${errorData.error}`, { positionClass: 'toast-top-right' });
+        }
+      } catch (error) {
+        toastr.error(`Error al crear producto: ${error.message}`, { positionClass: 'toast-top-right' });
+      }
+    });
+
+    // Escuchar eventos de agregar al carrito
+    document.addEventListener('productAddedToCart', () => {
+      updateCartCount();
+    });
+
+    // Inicializar el contador del carrito
+    updateCartCount();
   });
 </script>

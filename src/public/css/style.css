@@ -9,15 +9,28 @@ body {
 header {
   background-color: #333;
   color: white;
-  padding: 15px 0;
+  padding: 15px 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+nav .logo h3{
+  margin: 0;
 }
 
 nav ul {
   list-style: none;
   padding: 0;
   display: flex;
-  justify-content: center;
+  align-items: center;
   margin: 0;
 }
 
@@ -25,15 +38,89 @@ nav ul li {
   margin: 0 20px;
 }
 
-nav ul li a {
+nav a {
   color: white;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 500;
   transition: color 0.3s ease;
 }
 
-nav ul li a:hover {
-  color: #bbb;
+nav a:hover {
+  color: #696969;
+}
+
+nav .dropdown {
+  position: relative;
+}
+
+nav .dropdown-content {
+  visibility: hidden;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  max-height: 150px; 
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+nav .dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+nav .dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
+
+nav .dropdown:hover .dropdown-content {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+nav .cart {
+  position: relative;
+}
+
+nav .cart .cart-count {
+  position: absolute;
+  top: -13px;
+  right: -15px;
+  background-color: red;
+  color: white;
+  border-radius: 100%;
+  padding: 6px 6px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5px;
+  height: 5px;
+  line-height: 0.5;
+}
+
+nav .user-icon {
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+nav .user-icon:hover {
+  color: #007bff;
+}
+
+nav .user-icon.admin {
+  color: red;
 }
 
 main {
@@ -46,7 +133,7 @@ footer {
   background-color: #333;
   color: white;
   text-align: center;
-  padding: 15px 0;
+  padding: 2px 0;
   position: fixed;
   width: 100%;
   bottom: 0;
@@ -127,18 +214,25 @@ p {
 }
 
 .product-card button {
-  background-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  background-color: #555;
   color: white;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
   cursor: pointer;
-  margin: 10px 5px;
-  transition: background-color 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
 }
 
 .product-card button:hover {
-  background-color: #555;
+  background-color: #333;
+}
+
+.product-card:hover button {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .product-card .remove-product {
@@ -152,22 +246,26 @@ p {
 /* Estilos para el botón "Eliminar Producto" en el carrito */
 .product-card .remove-product-cart {
   position: absolute;
-  top: 2px;
+  top: -2px;
   right: 10px;
   background-color: #dc3545;
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 100%;
+  padding: 13px 10px;
+  height: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  line-height: 0.5;
 }
 
 .product-card .remove-product-cart:hover {
   background-color: #c82333;
 }
+
 
 /* Estilos para el formulario de creación de productos */
 form {
@@ -211,4 +309,120 @@ form button {
 
 form button:hover {
   background-color: #555;
+}
+
+
+/* Ocultar scrollbar para Chrome, Safari y Opera */
+::-webkit-scrollbar {
+  width: 0px;  /* Ancho de la scrollbar */
+  background: transparent;  /* Fondo transparente */
+}
+
+/* Ocultar scrollbar para IE, Edge y Firefox */
+.example {
+  -ms-overflow-style: none;  /* IE y Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Estilos para las miniaturas de los productos */
+.product-thumbnails {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.product-thumbnail {
+  width: 100px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-thumbnail:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.empty-cart {
+  position: absolute;
+  top: 100px;
+  right: 50px;
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 24px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.empty-cart:hover {
+  color: #c82333;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.quantity-control button {
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+quantity-control button:hover {
+  background-color: #555;
+}
+
+.quantity-control .quantity {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.pagination-button {
+  background-color: #555;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin: 0 10px;
+}
+
+.pagination-button:hover {
+  background-color: #333;
+  transform: scale(1.1);
+}
+
+.pagination-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+#page-info {
+  margin: 0 10px;
+  font-size: 1.2rem;
+  color: #555;
 }
