@@ -77,12 +77,18 @@ router.post('/', handlePolicies(['admin']), async (req, res) => {
     await newProduct.save();
 
     const io = req.app.get("socketio");
-    io.emit("updateProducts", newProduct); // Emitir evento de nuevo producto
+    io.emit("updateProducts", newProduct);
 
-    res.status(201).json({ status: 'success', payload: newProduct });
+    res.status(201).json({ 
+      status: 'success', 
+      payload: newProduct 
+    });
   } catch (error) {
     console.error('Error al crear producto:', error);
-    res.status(500).json({ error: 'Error al crear producto' });
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Error al crear producto' 
+    });
   }
 });
 
@@ -105,11 +111,12 @@ router.put('/:pid', handlePolicies(['admin']), async (req, res) => {
   }
 });
 
-// Ruta DELETE /api/products/:pid - Elimina un producto por ID
+// Ruta DELETE /api/products/:pid
 router.delete('/:pid', handlePolicies(['admin']), async (req, res) => {
   try {
     const productId = req.params.pid;
-    const deletedProduct = await Product.findByIdAndDelete(productId).lean();
+    const deletedProduct = await Product.findByIdAndDelete(productId);
+    
     if (!deletedProduct) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
@@ -121,15 +128,9 @@ router.delete('/:pid', handlePolicies(['admin']), async (req, res) => {
     );
 
     const io = req.app.get("socketio");
-    io.emit("productDeleted", productId); // Emitir evento de eliminación de producto
+    io.emit("productDeleted", productId);
 
-    // Emitir evento de actualización de carrito para todos los carritos afectados
-    const carts = await Cart.find({ 'products.product': productId }).populate('products.product');
-    carts.forEach(cart => {
-      io.emit("updateCart", cart);
-    });
-
-    res.json({ status: 'success', payload: deletedProduct });
+    res.json({ status: 'success', message: 'Producto eliminado correctamente' });
   } catch (error) {
     console.error('Error al eliminar producto:', error);
     res.status(500).json({ error: 'Error al eliminar producto' });

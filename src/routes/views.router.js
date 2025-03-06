@@ -55,23 +55,44 @@ router.get('/realtimeproducts', handlePolicies(['public', 'user', 'admin']), asy
 router.get('/carts', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const user = req.user;
-    if (!user || user.role === 'public') {
-      return res.status(403).send(`
-        <script>
-          showLoginAlert();
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-        </script>
-      `);
+    
+    // Verificar si el usuario está autenticado y tiene un rol válido
+    if (!user || (user.role !== 'user' && user.role !== 'admin')) {
+      return res.redirect('/');
     }
 
-    const cartId = req.query.cartId;
-    const cart = await Cart.findById(cartId).populate('products.product');
+    // Redirigir a la ruta específica del carrito del usuario
+    res.redirect(`/carts/${user.cart}`);
+  } catch (error) {
+    console.error('Error al obtener carrito:', error);
+    res.status(500).send('Error al obtener carrito');
+  }
+});
+
+router.get('/carts/:cid', handlePolicies(['user', 'admin']), async (req, res) => {
+  try {
+    const user = req.user;
+    
+    // Verificar si el usuario está autenticado y tiene un rol válido
+    if (!user || (user.role !== 'user' && user.role !== 'admin')) {
+      return res.redirect('/');
+    }
+
+    // Verificar que el carrito pertenezca al usuario
+    if (user.cart.toString() !== req.params.cid) {
+      return res.redirect(`/carts/${user.cart}`);
+    }
+
+    const cart = await Cart.findById(user.cart).populate('products.product');
     if (!cart) {
       return res.status(404).send('Carrito no encontrado');
     }
-    res.render('carts', { title: 'CARRITO', cart });
+    
+    res.render('carts', { 
+      title: 'CARRITO', 
+      cart,
+      user: req.user 
+    });
   } catch (error) {
     console.error('Error al obtener carrito:', error);
     res.status(500).send('Error al obtener carrito');

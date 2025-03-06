@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
+import Cart from '../models/carts.model.js';
 
 const SECRET_KEY = 'your-secret-key';
 
@@ -7,39 +8,56 @@ export const handlePolicies = (policies) => {
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
+      
       if (!token) {
-        req.user = { role: 'public' }; // Asignar rol "public" a usuarios no autenticados
         if (policies.includes('public')) {
           return next();
-        } else {
-          res.locals.showLoginAlert = true;
-          return res.status(401).json({ error: 'No token provided', showLoginAlert: true });
         }
+        // Si es una petición AJAX, devolver JSON
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+          return res.status(401).json({ 
+            error: 'Debes iniciar sesión', 
+            showLoginAlert: true 
+          });
+        }
+        // Si es una petición normal, redirigir al index con la señal de mostrar alerta
+        res.locals.showLoginAlert = true;
+        return res.redirect('/?showLogin=true');
       }
 
       const decoded = jwt.verify(token, SECRET_KEY);
       const user = await User.findById(decoded.id);
 
       if (!user) {
-        req.user = { role: 'public' }; // Asignar rol "public" a usuarios con token inválido
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+          return res.status(401).json({ 
+            error: 'Usuario no encontrado', 
+            showLoginAlert: true 
+          });
+        }
         res.locals.showLoginAlert = true;
-        return res.status(401).json({ error: 'Invalid token', showLoginAlert: true });
+        return res.redirect('/');
       }
 
-      if (!policies.includes(user.role)) {
-        if (user.role === 'public') {
-          res.locals.showLoginAlert = true;
-          return res.status(403).json({ error: 'Debes iniciar sesión', showLoginAlert: true });
-        }
-        return res.status(403).json({ error: 'Access denied' });
+      // Asegurar que el usuario tenga un carrito
+      if (!user.cart && (user.role === 'user' || user.role === 'admin')) {
+        const newCart = new Cart({ products: [] });
+        await newCart.save();
+        user.cart = newCart._id;
+        await user.save();
       }
 
       req.user = user;
       next();
     } catch (error) {
-      req.user = { role: 'public' }; // Asignar rol "public" a usuarios con error en la verificación del token
+      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        return res.status(401).json({ 
+          error: 'Token inválido', 
+          showLoginAlert: true 
+        });
+      }
       res.locals.showLoginAlert = true;
-      return res.status(401).json({ error: 'Unauthorized', showLoginAlert: true });
+      return res.redirect('/?showLogin=true');
     }
   };
 };

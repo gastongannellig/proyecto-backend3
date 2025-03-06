@@ -28,10 +28,36 @@
   </div>
 </main>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const socket = io(); // Conectar con WebSockets
+document.addEventListener("DOMContentLoaded", async () => {
+  const socket = io();
   const cartCount = document.getElementById('cart-count');
   const cartId = localStorage.getItem('cartId') || 'default-cart-id'; // Utilizar un único ID de carrito
+
+  // Agregar manejador para borrar productos
+  document.querySelectorAll(".delete-product").forEach(button => {
+    button.addEventListener("click", async (event) => {
+      const productId = event.target.getAttribute("data-id");
+      
+      try {
+        const response = await fetch(`/api/products/${productId}`, {
+          method: "DELETE",
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          notifications.success('Producto eliminado exitosamente');
+          socket.emit('productDeleted', productId);
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          const error = await response.json();
+          notifications.error(error.error || 'Error al eliminar producto');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        notifications.error('Error al eliminar producto');
+      }
+    });
+  });
 
   const updateCartCount = async () => {
     try {

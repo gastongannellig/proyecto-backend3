@@ -11,17 +11,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-handlebars": "^8.0.1",
     "express-session": "^1.18.1",
+    "jquery": "^3.7.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "session-file-store": "^1.5.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "sweetalert2": "^11.17.2",
+    "toastr": "^2.1.4"
   }
 }

@@ -27,7 +27,7 @@ passport.use('login', new LocalStrategy({
   try {
     const user = await User.findOne({ email });
     if (!user || !isValidPassword(user, password)) {
-      return done(null, false, { message: 'Invalid email or password' });
+      return done(null, false, { message: 'Email o contraseña inválidos.' });
     }
     return done(null, user);
   } catch (error) {
