@@ -119,8 +119,15 @@ nav .user-icon:hover {
   color: #007bff;
 }
 
-nav .user-icon.admin {
+.user-icon.admin {
   color: red;
+}
+
+.user-icon {
+  cursor: pointer;
+}
+.user-icon.user {
+  color: lightblue;
 }
 
 main {

@@ -1,3 +1,4 @@
+{{!-- filepath: /C:/Users/Gaston/Desktop/coderhouse/back-end/backend II/src/views/layouts/main.handlebars --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,6 +57,7 @@
       const cartCount = document.getElementById('cart-count');
       const userIcon = document.querySelector('.user-icon');
       const categoryDropdown = document.getElementById('category-dropdown');
+      const changeUserButton = document.getElementById('change-user');
 
       const updateCartCount = () => {
         fetch(`/api/carts/${cartId}`)
@@ -68,23 +70,10 @@
           .catch(error => console.error('Error al obtener el carrito:', error));
       };
 
-      document.addEventListener("DOMContentLoaded", () => {
-          const categoryDropdown = document.getElementById('category-dropdown');
-
-          fetch('/api/categories') // Nueva ruta para obtener todas las categorías
-            .then(response => response.json())
-            .then(categories => {
-              categoryDropdown.innerHTML = categories.map(category => 
-                `<a href="/realtimeproducts?category=${category}">${category}</a>`).join('');
-            })
-            .catch(error => console.error('Error al obtener categorías:', error));
-        });
-
       const loadCategories = () => {
         fetch('/api/products')
           .then(response => response.json())
           .then(data => {
-            console.log("Respuesta de la API:", data); // Verifica qué devuelve la API
             if (data.status === 'success' && Array.isArray(data.payload)) {
               const categories = [...new Set(data.payload.map(product => product.category))];
               categoryDropdown.innerHTML = '';
@@ -125,30 +114,110 @@
       const showLoginAlert = () => {
         Swal.fire({
           title: 'Iniciar sesión',
-          text: "Selecciona tu rol",
-          icon: 'info',
+          html: `
+            <input type="email" id="email" class="swal2-input" placeholder="Email">
+            <input type="password" id="password" class="swal2-input" placeholder="Password">
+          `,
           showCancelButton: true,
-          confirmButtonText: 'Administrador',
-          cancelButtonText: 'Invitado'
+          confirmButtonText: 'Iniciar sesión',
+          cancelButtonText: 'Registrar',
+          preConfirm: () => {
+            const email = Swal.getPopup().querySelector('#email').value;
+            const password = Swal.getPopup().querySelector('#password').value;
+            if (!email || !password) {
+              Swal.showValidationMessage(`Por favor ingrese email y contraseña`);
+            }
+            return { email, password };
+          }
         }).then((result) => {
           if (result.isConfirmed) {
-            // Guardar rol en localStorage y mostrar elementos solo para administrador
-            localStorage.setItem('userRole', 'admin');
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-            userIcon.classList.add('admin');
-            toastr.success('Has iniciado sesión como Administrador');
-          } else {
-            // Guardar rol en localStorage y ocultar elementos solo para administrador
-            localStorage.setItem('userRole', 'guest');
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-            userIcon.classList.remove('admin');
-            toastr.info('Has iniciado sesión como Invitado');
+            const { email, password } = result.value;
+            fetch('/api/sessions/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.error) {
+                toastr.error(data.error);
+              } else {
+                localStorage.setItem('userRole', data.role);
+                location.reload();
+              }
+            })
+            .catch(error => toastr.error('Error al iniciar sesión'));
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+            Swal.fire({
+              title: 'Registrar',
+              html: `
+                <input type="text" id="first_name" class="swal2-input" placeholder="First Name">
+                <input type="text" id="last_name" class="swal2-input" placeholder="Last Name">
+                <input type="email" id="email" class="swal2-input" placeholder="Email">
+                <input type="number" id="age" class="swal2-input" placeholder="Age">
+                <input type="password" id="password" class="swal2-input" placeholder="Password">
+              `,
+              showCancelButton: true,
+              confirmButtonText: 'Registrar',
+              preConfirm: () => {
+                const first_name = Swal.getPopup().querySelector('#first_name').value;
+                const last_name = Swal.getPopup().querySelector('#last_name').value;
+                const email = Swal.getPopup().querySelector('#email').value;
+                const age = Swal.getPopup().querySelector('#age').value;
+                const password = Swal.getPopup().querySelector('#password').value;
+                if (!first_name || !last_name || !email || !age || !password) {
+                  Swal.showValidationMessage(`Por favor complete todos los campos`);
+                }
+                return { first_name, last_name, email, age, password };
+              }
+            }).then((result) => {
+              if (result.isConfirmed) {
+                const { first_name, last_name, email, age, password } = result.value;
+                fetch('/api/sessions/register', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ first_name, last_name, email, age, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.error) {
+                    toastr.error(data.error);
+                  } else {
+                    toastr.success('Registro exitoso. Por favor inicie sesión.');
+                  }
+                })
+                .catch(error => toastr.error('Error al registrar'));
+              }
+            });
           }
-          // Establecer un temporizador para restablecer el rol después de 5 minutos
-          setTimeout(() => {
-            localStorage.removeItem('userRole');
-            location.reload();
-          }, 5 * 60 * 1000); // 5 minutos en milisegundos
+        });
+      };
+
+      const logoutUser = () => {
+        Swal.fire({
+          title: '¿Seguro que quieres desloguearte?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, desloguearme',
+          cancelButtonText: 'Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch('/api/sessions/logout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            .then(() => {
+              localStorage.removeItem('userRole');
+              location.reload();
+            })
+            .catch(error => toastr.error('Error al cerrar sesión'));
+          }
         });
       };
 
@@ -157,28 +226,20 @@
       if (userRole === 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
         userIcon.classList.add('admin');
-      } else if (userRole === 'guest') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-        userIcon.classList.remove('admin');
+      } else if (userRole) {
+        userIcon.classList.add('user');
       } else {
-        // Mostrar alerta de inicio de sesión si no hay rol guardado
-        showLoginAlert();
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+        userIcon.classList.remove('admin', 'user');
       }
 
       // Cambiar usuario
-      document.getElementById('change-user').addEventListener('click', (event) => {
+      changeUserButton.addEventListener('click', (event) => {
         event.preventDefault();
-        const currentRole = localStorage.getItem('userRole');
-        if (currentRole === 'admin') {
-          localStorage.setItem('userRole', 'guest');
-          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-          userIcon.classList.remove('admin');
-          toastr.info('Has cambiado a Invitado');
+        if (userRole) {
+          logoutUser();
         } else {
-          localStorage.setItem('userRole', 'admin');
-          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-          userIcon.classList.add('admin');
-          toastr.success('Has cambiado a Administrador');
+          showLoginAlert();
         }
       });
 
@@ -190,6 +251,8 @@
       // Cargar categorías al cargar la página
       loadCategories();
     });
+
+    
   </script>
 </body>
 </html>

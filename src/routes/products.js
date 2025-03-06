@@ -1,13 +1,12 @@
 import express from 'express';
 import Product from '../models/products.model.js';
 import Cart from '../models/carts.model.js';
-import mongoose from 'mongoose';
+import { handlePolicies } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-
 // Ruta GET /api/products - Lista todos los productos con paginación, ordenamiento y filtrado
-router.get('/', async (req, res) => {
+router.get('/', handlePolicies(['public', 'user', 'admin']), async (req, res) => {
   try {
     let { limit = 10, page = 1, sort, query } = req.query;
 
@@ -46,7 +45,7 @@ router.get('/', async (req, res) => {
 });
 
 // Ruta GET /api/products/categories - Obtiene todas las categorías únicas
-router.get('/categories', async (req, res) => {
+router.get('/categories', handlePolicies(['public', 'user', 'admin']), async (req, res) => {
   try {
     const categories = await Product.distinct('category');
     res.json({ status: 'success', payload: categories });
@@ -56,20 +55,8 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-router.get('/api/categories', async (req, res) => {
-  try {
-    const allProducts = await productManager.getAllProducts();
-    const uniqueCategories = [...new Set(allProducts.map(product => product.category))];
-    res.json(uniqueCategories);
-  } catch (error) {
-    console.error('Error al obtener las categorías:', error);
-    res.status(500).json({ error: 'Error al obtener categorías' });
-  }
-});
-
-
 // Ruta GET /api/products/:pid - Obtiene un producto por ID
-router.get('/:pid', async (req, res) => {
+router.get('/:pid', handlePolicies(['public', 'user', 'admin']), async (req, res) => {
   try {
     const productId = req.params.pid;
     const product = await Product.findById(productId).lean();
@@ -84,7 +71,7 @@ router.get('/:pid', async (req, res) => {
 });
 
 // Ruta POST /api/products - Crea un nuevo producto
-router.post('/', async (req, res) => {
+router.post('/', handlePolicies(['admin']), async (req, res) => {
   try {
     const newProduct = new Product(req.body);
     await newProduct.save();
@@ -100,7 +87,7 @@ router.post('/', async (req, res) => {
 });
 
 // Ruta PUT /api/products/:pid - Actualiza un producto por ID
-router.put('/:pid', async (req, res) => {
+router.put('/:pid', handlePolicies(['admin']), async (req, res) => {
   try {
     const productId = req.params.pid;
     const updatedProduct = await Product.findByIdAndUpdate(productId, req.body, { new: true, runValidators: true }).lean();
@@ -119,7 +106,7 @@ router.put('/:pid', async (req, res) => {
 });
 
 // Ruta DELETE /api/products/:pid - Elimina un producto por ID
-router.delete('/:pid', async (req, res) => {
+router.delete('/:pid', handlePolicies(['admin']), async (req, res) => {
   try {
     const productId = req.params.pid;
     const deletedProduct = await Product.findByIdAndDelete(productId).lean();
@@ -146,6 +133,42 @@ router.delete('/:pid', async (req, res) => {
   } catch (error) {
     console.error('Error al eliminar producto:', error);
     res.status(500).json({ error: 'Error al eliminar producto' });
+  }
+});
+
+// Ruta POST /api/products/:pid/cart - Agrega un producto al carrito
+router.post('/:pid/cart', async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || user.role === 'public') {
+      return res.status(403).json({ showLoginAlert: true });
+    }
+
+    const productId = req.params.pid;
+    const cartId = req.body.cartId;
+    const quantity = req.body.quantity || 1;
+
+    const cart = await Cart.findById(cartId);
+    if (!cart) {
+      return res.status(404).json({ error: 'Carrito no encontrado' });
+    }
+
+    const productIndex = cart.products.findIndex(p => p.product.toString() === productId);
+    if (productIndex > -1) {
+      cart.products[productIndex].quantity += quantity;
+    } else {
+      cart.products.push({ product: productId, quantity });
+    }
+
+    await cart.save();
+
+    const io = req.app.get("socketio");
+    io.emit("productAddedToCart", cart); // Emitir evento de adición de producto al carrito
+
+    res.status(200).json(cart);
+  } catch (error) {
+    console.error('Error al agregar producto al carrito:', error);
+    res.status(500).json({ error: 'Error al agregar producto al carrito' });
   }
 });
 

@@ -1,10 +1,11 @@
 import express from 'express';
 import Cart from '../models/carts.model.js';
+import { handlePolicies } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 // Ruta GET /api/carts/:cid - Obtiene un carrito por su ID
-router.get('/:cid', async (req, res) => {
+router.get('/:cid', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const cartId = req.params.cid;
     const cart = await Cart.findById(cartId).populate('products.product');
@@ -19,7 +20,7 @@ router.get('/:cid', async (req, res) => {
 });
 
 // Ruta POST /api/carts - Crea un nuevo carrito
-router.post('/', async (req, res) => {
+router.post('/', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const newCart = new Cart({ products: [] });
     await newCart.save();
@@ -31,7 +32,7 @@ router.post('/', async (req, res) => {
 });
 
 // Ruta POST /api/carts/:cid/products - Agrega un producto al carrito
-router.post('/:cid/products', async (req, res) => {
+router.post('/:cid/products', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const cartId = req.params.cid;
     const { productId, quantity } = req.body;
@@ -61,7 +62,7 @@ router.post('/:cid/products', async (req, res) => {
 });
 
 // Ruta DELETE /api/carts/:cid/products/:pid - Elimina un producto del carrito
-router.delete('/:cid/products/:pid', async (req, res) => {
+router.delete('/:cid/products/:pid', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const cartId = req.params.cid;
     const productId = req.params.pid;
@@ -86,7 +87,7 @@ router.delete('/:cid/products/:pid', async (req, res) => {
 });
 
 // Ruta PUT /api/carts/:cid - Actualiza el carrito con un arreglo de productos
-router.put('/:cid', async (req, res) => {
+router.put('/:cid', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const cartId = req.params.cid;
     const { products } = req.body;
@@ -111,7 +112,7 @@ router.put('/:cid', async (req, res) => {
 });
 
 // Ruta PUT /api/carts/:cid/products/:pid - Actualiza la cantidad de un producto en el carrito
-router.put('/:cid/products/:pid', async (req, res) => {
+router.put('/:cid/products/:pid', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const cartId = req.params.cid;
     const productId = req.params.pid;
@@ -142,7 +143,7 @@ router.put('/:cid/products/:pid', async (req, res) => {
 });
 
 // Ruta DELETE /api/carts/:cid - Elimina todos los productos del carrito
-router.delete('/:cid', async (req, res) => {
+router.delete('/:cid', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const cartId = req.params.cid;
 

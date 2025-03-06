@@ -1,20 +1,22 @@
 import { Router } from 'express';
 import Product from '../models/products.model.js';
 import Cart from '../models/carts.model.js';
+import { handlePolicies } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+router.get('/', handlePolicies(['public', 'user', 'admin']), async (req, res) => {
   try {
     const products = await Product.find();
-    res.render('home', { title: 'INICIO', products });
+    const isAdmin = req.user && req.user.role === 'admin';
+    res.render('home', { title: 'INICIO', products, isAdmin });
   } catch (error) {
     console.error('Error al renderizar vista:', error);
     res.status(500).send('Error al renderizar vista');
   }
 });
 
-router.get('/realtimeproducts', async (req, res) => {
+router.get('/realtimeproducts', handlePolicies(['public', 'user', 'admin']), async (req, res) => {
   try {
     let { page = 1, category } = req.query;
     page = Math.max(parseInt(page), 1); // Asegura que page sea >= 1
@@ -50,8 +52,20 @@ router.get('/realtimeproducts', async (req, res) => {
   }
 });
 
-router.get('/carts', async (req, res) => {
+router.get('/carts', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
+    const user = req.user;
+    if (!user || user.role === 'public') {
+      return res.status(403).send(`
+        <script>
+          showLoginAlert();
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        </script>
+      `);
+    }
+
     const cartId = req.query.cartId;
     const cart = await Cart.findById(cartId).populate('products.product');
     if (!cart) {
@@ -65,3 +79,4 @@ router.get('/carts', async (req, res) => {
 });
 
 export default router;
+
