@@ -1,4 +1,5 @@
 import { registerUser, loginUser } from '../services/authService.js';
+import UserDTO from '../dtos/userDTO.js';
 
 export const register = async (req, res) => {
   try {
@@ -39,7 +40,8 @@ export const logout = async (req, res) => {
 
 export const current = (req, res) => {
   if (req.user) {
-    res.json(req.user);
+    const userDTO = new UserDTO(req.user); // Crear un DTO del usuario
+    res.json(userDTO); // Enviar solo los datos necesarios
   } else {
     res.status(401).json({ error: 'Unauthorized' });
   }

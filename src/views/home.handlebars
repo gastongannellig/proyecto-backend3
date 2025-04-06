@@ -8,9 +8,9 @@
   <div class="product-list">
     {{#each products}}
       <div class="product-card">
-        <h3>{{title}}</h3>
+        <h3 class="product-title">{{title}}</h3>
         <p>{{description}}</p>
-        <p>Precio: ${{price}}</p>
+        <p>${{price}}</p>
         <button class="add-to-cart" data-id="{{_id}}" data-stock="{{stock}}">Agregar al Carrito</button>
       </div>
     {{/each}}
@@ -27,12 +27,12 @@
       <input type="text" id="description" name="description" required>
     </div>
     <div>
-      <label for="code">Código:</label>
-      <input type="text" id="code" name="code" required>
+      <label for="code">Código (opcional):</label>
+      <input type="text" id="code" name="code" placeholder="Se generará automáticamente si se deja vacío">
     </div>
     <div>
       <label for="price">Precio:</label>
-      <input type="number" id="price" name="price" required>
+      <input type="number" id="price" name="price" step="0.01" required>
     </div>
     <div>
       <label for="stock">Stock:</label>
@@ -43,7 +43,7 @@
       <input type="text" id="category" name="category" required>
     </div>
     <div>
-      <label for="thumbnails">Thumbnails:</label>
+      <label for="thumbnails">Thumbnails (URLs separadas por coma):</label>
       <input type="text" id="thumbnails" name="thumbnails" placeholder="http://example.com/image1.jpg, http://example.com/image2.jpg">
     </div>
     <button type="submit">Crear Producto</button>

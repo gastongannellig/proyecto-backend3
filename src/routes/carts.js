@@ -2,6 +2,7 @@ import express from 'express';
 import Cart from '../models/carts.model.js';
 import Product from '../models/products.model.js'; // Agregar esta importación
 import { handlePolicies } from '../middlewares/authMiddleware.js';
+import { purchaseCart } from '../controllers/purchaseController.js';
 
 const router = express.Router();
 
@@ -133,6 +134,10 @@ router.post('/add-product', handlePolicies(['user', 'admin']), async (req, res) 
     }
 
     await cart.save();
+
+    const io = req.app.get("socketio");
+    io.emit("cartUpdated", { cartId: req.user.cart });
+
     res.status(200).json(cart);
   } catch (error) {
     res.status(500).json({ error: 'Error al agregar producto al carrito' });
@@ -232,6 +237,9 @@ router.delete('/:cid', handlePolicies(['user', 'admin']), async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar todos los productos del carrito' });
   }
 });
+
+// Ruta POST /api/carts/:id/purchase - Finaliza la compra del carrito
+router.post('/:id/purchase', handlePolicies(['user', 'admin']), purchaseCart);
 
 // Limpiar el carrito del localStorage al cerrar sesión
 function handleLogout() {

@@ -35,6 +35,9 @@ router.get('/realtimeproducts', handlePolicies(['public', 'user', 'admin']), asy
 
     const totalPages = Math.ceil(totalProducts / limit);
 
+    // Determinar si el usuario es administrador
+    const isAdmin = req.user && req.user.role === 'admin';
+
     res.render('realTimeProducts', {
       title: 'TIENDA',
       products,
@@ -44,7 +47,8 @@ router.get('/realtimeproducts', handlePolicies(['public', 'user', 'admin']), asy
       hasNextPage: page < totalPages,
       prevPage: page > 1 ? page - 1 : null,
       nextPage: page < totalPages ? page + 1 : null,
-      category
+      category,
+      isAdmin // Pasar la variable isAdmin a la vista
     });
   } catch (error) {
     console.error('Error al renderizar vista:', error);
@@ -72,13 +76,11 @@ router.get('/carts', handlePolicies(['user', 'admin']), async (req, res) => {
 router.get('/carts/:cid', handlePolicies(['user', 'admin']), async (req, res) => {
   try {
     const user = req.user;
-    
-    // Verificar si el usuario está autenticado y tiene un rol válido
+
     if (!user || (user.role !== 'user' && user.role !== 'admin')) {
       return res.redirect('/');
     }
 
-    // Verificar que el carrito pertenezca al usuario
     if (user.cart.toString() !== req.params.cid) {
       return res.redirect(`/carts/${user.cart}`);
     }
@@ -87,10 +89,19 @@ router.get('/carts/:cid', handlePolicies(['user', 'admin']), async (req, res) =>
     if (!cart) {
       return res.status(404).send('Carrito no encontrado');
     }
-    
+
+    // Calcular el total del carrito
+    const total = cart.products.reduce((sum, item) => {
+      if (item.product && item.product.price) {
+        return sum + item.quantity * item.product.price;
+      }
+      return sum;
+    }, 0);
+
     res.render('carts', { 
       title: 'CARRITO', 
       cart,
+      total, // Pasar el total a la plantilla
       user: req.user 
     });
   } catch (error) {

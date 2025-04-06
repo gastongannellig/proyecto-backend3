@@ -46,7 +46,78 @@ const notifications = {
     });
 
     if (result.isConfirmed) {
-      return notifications.showLoginForm();
+      const loginResult = await notifications.showLoginForm();
+      if (loginResult.isConfirmed) {
+        const { email, password } = loginResult.value;
+        try {
+          const response = await fetch('/api/sessions/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email, password })
+          });
+          
+          const data = await response.json();
+          if (data.error) {
+            notifications.error(data.error);
+            return false;
+          } else {
+            localStorage.setItem('userRole', data.user.role);
+            notifications.success('Inicio de sesión exitoso');
+            setTimeout(() => location.reload(), 1500);
+            return true;
+          }
+        } catch (error) {
+          console.error('Error in login process:', error);
+          notifications.error('Error al iniciar sesión');
+          return false;
+        }
+      } else if (loginResult.dismiss === Swal.DismissReason.cancel) {
+        // Si el usuario cancela el login form, mostrar el registro
+        Swal.fire({
+          title: 'Registrar',
+          html: `
+            <input type="text" id="first_name" class="swal2-input" placeholder="First Name">
+            <input type="text" id="last_name" class="swal2-input" placeholder="Last Name">
+            <input type="email" id="email" class="swal2-input" placeholder="Email">
+            <input type="number" id="age" class="swal2-input" placeholder="Age">
+            <input type="password" id="password" class="swal2-input" placeholder="Password">
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Registrar',
+          preConfirm: () => {
+            const first_name = Swal.getPopup().querySelector('#first_name').value;
+            const last_name = Swal.getPopup().querySelector('#last_name').value;
+            const email = Swal.getPopup().querySelector('#email').value;
+            const age = Swal.getPopup().querySelector('#age').value;
+            const password = Swal.getPopup().querySelector('#password').value;
+
+            if (!first_name || !last_name || !email || !age || !password) {
+              Swal.showValidationMessage('Por favor complete todos los campos');
+            }
+            return { first_name, last_name, email, age, password };
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const userData = result.value;
+            fetch('/api/sessions/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(userData)
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.error) {
+                  notifications.error(data.error);
+                } else {
+                  notifications.success('Registro exitoso. Por favor inicie sesión.');
+                  setTimeout(() => notifications.showLoginAlert(), 1500);
+                }
+              })
+              .catch(error => notifications.error('Error al registrar'));
+          }
+        });
+      }
     }
 
     return result;
@@ -96,7 +167,7 @@ const notifications = {
     return window.Swal.fire({
       title: 'Iniciar sesión',
       html: `
-      <p>Para acceder al carrito necesitas estar logueado</p>
+      <p>Inicia sesión con una nueva cuenta o registrate!</p>
               <input type="email" id="email" class="swal2-input" placeholder="Email">
         <input type="password" id="password" class="swal2-input" placeholder="Password">
       <div style="margin-top: 15px; text-align: left; padding-left: 20px;">

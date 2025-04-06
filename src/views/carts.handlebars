@@ -1,19 +1,106 @@
 <h1>Mi Carrito</h1>
-<div id="cart-list" class="product-list">
-  {{#if cart.products.length}}
-    {{#each cart.products}}
-      <div class="product-card">
-        <button class="remove-product-cart" data-id="{{product._id}}">x</button>
-        <h3>{{product.title}}</h3>
-        <div class="quantity-control">
-          <button class="decrease-quantity" data-id="{{product._id}}">-</button>
-          <span class="quantity">{{quantity}}</span>
-          <button class="increase-quantity" data-id="{{product._id}}" data-stock="{{product.stock}}">+</button>
+<div id="cart-list">
+  <div class="cart-products">
+    {{#if cart.products.length}}
+      {{#each cart.products}}
+        <div class="cart-product-card">
+          <div class="product-name">
+            <h3>{{product.title}}</h3>
+          </div>
+          <div class="quantity-control">
+            <button class="decrease-quantity" data-id="{{product._id}}">-</button>
+            <span class="quantity">{{quantity}}</span>
+            <button class="increase-quantity" data-id="{{product._id}}" data-stock="{{product.stock}}">+</button>
+          </div>
+          <div class="product-price">
+            <span>$ {{multiply product.price 1 toFixed=2}}</span>
+          </div>
+          <div class="remove-product">
+            <button class="remove-product-cart" data-id="{{product._id}}">x</button>
+          </div>
         </div>
-      </div>
-    {{/each}}
-    <button id="empty-cart" class="empty-cart"><i class="fas fa-trash-alt"></i></button>
-  {{else}}
-    <p>Tu carrito está vacío</p>
-  {{/if}}
+      {{/each}}
+    {{else}}
+      <p>Tu carrito está vacío</p>
+    {{/if}}
+  </div>
+  <div class="cart-summary">
+    <h3>Resumen de compra</h3>
+    <div class="summary-item">
+      <span>Items: {{cart.products.length}} (por tipo de producto)</span>
+    </div>
+    <div class="summary-item">
+      <span>Envío</span>
+      <span>Gratis</span>
+    </div>
+    <div class="summary-item">
+      <span>Total</span>
+      <span id="cart-total">${{total}}</span>
+    </div>
+    <button id="finalize-purchase">Finalizar Compra</button>
+  </div>
 </div>
+
+<!-- Modal de Confirmación de Datos -->
+<div id="pre-checkout-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <h2>Confirmar Datos</h2>
+    <form id="pre-checkout-form">
+      <div>
+        <label for="full-name">Nombre y Apellido:</label>
+        <input type="text" id="full-name" name="fullName" required>
+      </div>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div>
+        <label for="phone">Teléfono:</label>
+        <input type="tel" id="phone" name="phone" required>
+      </div>
+      <button type="submit" class="confirm-purchase">Confirmar Compra</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal del Ticket Fiscal -->
+<div id="ticket-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <h2>Ticket de Compra</h2>
+    <div class="ticket-details">
+      <h3>Detalles del Comprador</h3>
+      <p><strong>Nombre:</strong> <span id="ticket-full-name"></span></p>
+      <p><strong>Email:</strong> <span id="ticket-email"></span></p>
+      <p><strong>Teléfono:</strong> <span id="ticket-phone"></span></p>
+
+      <h3>Productos Comprados</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-products"></tbody>
+      </table>
+
+      <h3>Total</h3>
+      <p><strong>$<span id="ticket-total"></span></strong></p>
+    </div>
+  </div>
+</div>
+
+<script>
+export const helpers = {
+    multiply: function(a, b, options) {
+        const result = a * b;
+        if (options.hash.toFixed !== undefined) {
+            return result.toFixed(options.hash.toFixed);
+        }
+        return result;
+    }
+};
+</script>

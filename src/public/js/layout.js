@@ -220,15 +220,15 @@ const getCurrentUser = async () => {
         'Accept': 'application/json'
       }
     });
-    
+
     if (response.status === 401) {
       return null;
     }
-    
+
     if (response.ok) {
       return await response.json();
     }
-    
+
     throw new Error('Error getting current user');
   } catch (error) {
     console.error('Error al obtener usuario actual:', error);
@@ -236,4 +236,4 @@ const getCurrentUser = async () => {
   }
 };
 
-export { showLoginAlert };
+export { showLoginAlert, getCurrentUser };

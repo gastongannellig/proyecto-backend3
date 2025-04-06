@@ -5,7 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/app.js"
+    "dev": "cross-env NODE_ENV=development node --watch src/app.js",
+    "start": "cross-env NODE_ENV=production node src/app.js",
+    "test": "cross-env NODE_ENV=test node src/app.js",
+    "seed-products": "cross-env NODE_ENV=development node src/process.js --seed-products",
+    "clear-carts": "cross-env NODE_ENV=development node src/process.js --clear-carts",
+    "show-env": "cross-env NODE_ENV=development node src/process.js --show-env"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +18,9 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "bcrypt": "^5.1.1",
+    "commander": "^13.1.0",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-handlebars": "^8.0.1",
@@ -21,13 +28,19 @@
     "jquery": "^3.7.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
+    "nodemailer": "^6.10.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pdfkit": "^0.16.0",
     "session-file-store": "^1.5.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.17.2",
-    "toastr": "^2.1.4"
+    "toastr": "^2.1.4",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

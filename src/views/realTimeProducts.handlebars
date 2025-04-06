@@ -3,10 +3,12 @@
   <div id="product-list" class="product-list">
     {{#each products}}
       <div class="product-card">
-        <button class="delete-product admin-only" data-id="{{_id}}">x</button>
+        {{#if ../isAdmin}}
+          <button class="delete-product admin-only" data-id="{{_id}}">x</button>
+        {{/if}}
         <h3 class="product-title">{{title}}</h3>
         <p>{{description}}</p>
-        <p>Precio: ${{price}}</p>
+        <p>${{price}}</p>
         <p>Stock: {{stock}}</p>
         {{#if thumbnails}}
           {{#each thumbnails}}
@@ -27,70 +29,64 @@
     {{/if}}
   </div>
 </main>
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const socket = io();
-  const cartCount = document.getElementById('cart-count');
-  const cartId = localStorage.getItem('cartId') || 'default-cart-id'; // Utilizar un único ID de carrito
+<script type="module">
+  import { getCurrentUser } from '/js/layout.js';
 
-  // Agregar manejador para borrar productos
-  document.querySelectorAll(".delete-product").forEach(button => {
-    button.addEventListener("click", async (event) => {
-      const productId = event.target.getAttribute("data-id");
-      
+  
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const socket = io();
+    const cartCount = document.getElementById('cart-count');
+    const cartId = localStorage.getItem('cartId') || 'default-cart-id';
+
+    // Agregar manejador para borrar productos
+    document.querySelectorAll(".delete-product").forEach(button => {
+      button.addEventListener("click", async (event) => {
+        const productId = event.target.getAttribute("data-id");
+
+        try {
+          const user = await getCurrentUser(); // Usar la función correctamente
+          if (!user || user.role !== 'admin') {
+            notifications.error('No tienes permisos para eliminar productos');
+            return;
+          }
+
+          const response = await fetch(`/api/products/${productId}`, {
+            method: "DELETE",
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            notifications.success('Producto eliminado exitosamente');
+            socket.emit('productDeleted', productId);
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            const error = await response.json();
+            notifications.error(error.error || 'Error al eliminar producto');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          notifications.error('Error al eliminar producto');
+        }
+      });
+    });
+
+    const updateCartCount = async () => {
       try {
-        const response = await fetch(`/api/products/${productId}`, {
-          method: "DELETE",
-          credentials: 'include'
-        });
-
+        const response = await fetch(`/api/carts/${cartId}`);
         if (response.ok) {
-          notifications.success('Producto eliminado exitosamente');
-          socket.emit('productDeleted', productId);
-          setTimeout(() => location.reload(), 1500);
+          const cart = await response.json();
+          const count = cart.products.reduce((total, product) => total + product.quantity, 0);
+          cartCount.textContent = count;
+          cartCount.style.display = count > 0 ? 'block' : 'none';
         } else {
-          const error = await response.json();
-          notifications.error(error.error || 'Error al eliminar producto');
+          console.error("Error al obtener el carrito");
         }
       } catch (error) {
-        console.error('Error:', error);
-        notifications.error('Error al eliminar producto');
+        console.error("Error al obtener el carrito:", error);
       }
-    });
+    };
+
+    updateCartCount();
   });
-
-  const updateCartCount = async () => {
-    try {
-      const response = await fetch(`/api/carts/${cartId}`);
-      if (response.ok) {
-        const cart = await response.json();
-        const count = cart.products.reduce((total, product) => total + product.quantity, 0);
-        cartCount.textContent = count;
-        cartCount.style.display = count > 0 ? 'block' : 'none';
-      } else {
-        console.error("Error al obtener el carrito");
-      }
-    } catch (error) {
-      console.error("Error al obtener el carrito:", error);
-    }
-  };
-
-  // Escuchar eventos de WebSockets para actualizar productos en tiempo real
-  socket.on("updateProducts", (newProduct) => {
-    console.log("Nuevo producto recibido:", newProduct);
-    location.reload(); // Recargar la página para actualizar la lista de productos
-  });
-
-  socket.on("productDeleted", (productId) => {
-    console.log("Producto eliminado:", productId);
-    location.reload(); // Recargar la página para actualizar la lista de productos
-  });
-
-  socket.on("productAddedToCart", (data) => {
-    console.log("Producto agregado al carrito:", data);
-    updateCartCount(); // Actualizar el contador del carrito
-  });
-
-  updateCartCount(); // Inicializar el contador del carrito
-});
 </script>

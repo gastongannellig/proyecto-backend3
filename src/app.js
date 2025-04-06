@@ -12,6 +12,12 @@ import productsRouter from './routes/products.js';
 import cartsRouter from './routes/carts.js';
 import viewsRouter from './routes/views.router.js';
 import sessionsRouter from './routes/sessions.js';
+import Router from './routes/router.js';
+import { helpers } from './helpers/handlebars.helpers.js';
+import dotenv from 'dotenv';
+import config from './config/config.js';
+dotenv.config();
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,29 +25,35 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-const PORT = 8080;
-const productsFilePath = path.resolve("src/data/products.json"); // Define productsFilePath
+const PORT = config.PORT || 8080;
+const productsFilePath = path.resolve("src/data/products.json");
 
 // Conectar a MongoDB
-mongoose.connect("mongodb+srv://gastongannellig:53769421@codergannelli.5puq3.mongodb.net/Tienda?retryWrites=true&w=majority&appName=CoderGannelli")
+mongoose.connect(config.MONGO_URI)
   .then(() => console.log("Conectado a MongoDB"))
   .catch((error) => console.error("Error al conectar a MongoDB:", error));
 
 // Configuración de Handlebars
-app.engine("handlebars", engine({
-  extname: '.handlebars',
-  defaultLayout: 'main',
-  runtimeOptions: {
-    allowProtoPropertiesByDefault: true,
-    allowProtoMethodsByDefault: true,
-  },
+app.engine('handlebars', engine({
+    helpers: helpers,
+    extname: '.handlebars',
+    defaultLayout: 'main',
+    runtimeOptions: {
+        allowProtoPropertiesByDefault: true,
+        allowProtoMethodsByDefault: true,
+    },
 }));
-app.set("view engine", "handlebars");
-app.set("views", path.resolve(__dirname, "views"));
+app.set('views', './src/views');
+app.set('view engine', 'handlebars');
 
 // Middleware
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, "public")));
+
+// Router
+const router = new Router();
+app.use(router.generateCustomResponse);
+
 
 // Sesiones
 app.use(session({
@@ -58,6 +70,13 @@ app.use(passport.initialize());
 
 // Socket.io
 app.set("socketio", io);
+
+io.on("connection", (socket) => {
+
+  socket.on("updateCart", (cart) => {
+    io.emit("cartUpdated", cart);
+  });
+});
 
 // Rutas
 app.use('/api/products', productsRouter);
