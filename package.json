@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^9.7.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "bcrypt": "^5.1.1",
     "commander": "^13.1.0",

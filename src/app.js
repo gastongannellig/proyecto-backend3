@@ -13,6 +13,7 @@ import cartsRouter from './routes/carts.js';
 import viewsRouter from './routes/views.router.js';
 import sessionsRouter from './routes/sessions.js';
 import Router from './routes/router.js';
+import mocksRouter from './routes/mocks.router.js';
 import { helpers } from './helpers/handlebars.helpers.js';
 import dotenv from 'dotenv';
 import config from './config/config.js';
@@ -83,6 +84,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 app.use('/api/sessions', sessionsRouter);
+app.use('/api/mocks', mocksRouter);
 
 // Inicializar el servidor
 httpServer.listen(PORT, () => {
