@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
+      - SECRET_KEY=${SECRET_KEY}
+    networks:
+      - app-network
+    volumes:
+      - ./logs:/usr/src/app/logs
+      - ./uploads:/usr/src/app/uploads
+
+networks:
+  app-network:
+    driver: bridge
