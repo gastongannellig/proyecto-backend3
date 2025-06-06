@@ -1,4 +1,3 @@
-// src/modules/products/entities/product.entity.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
